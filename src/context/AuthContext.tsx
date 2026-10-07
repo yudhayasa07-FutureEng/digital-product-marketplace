@@ -4,6 +4,16 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, UserRole } from '@/lib/types';
 import { useToast } from './ToastContext';
 
+// Default user — selalu ter-login sebagai buyer default, tanpa perlu login
+const DEFAULT_USER: User = {
+  id: 'user-buyer-1',
+  name: 'Ahmad Pratama',
+  email: 'buyer@digitalhub.id',
+  role: 'buyer',
+  avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
+  created_at: new Date().toISOString(),
+};
+
 interface AuthContextType {
   user: User | null;
   loading: boolean;
@@ -19,42 +29,32 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const { success, error } = useToast();
-
-  const fetchCurrentUser = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch('/api/auth/me');
-      const data = await res.json();
-      if (data.user) {
-        setUser(data.user);
-      } else {
-        // Default to demo buyer for immediate interactive testing if no session
-        const defaultBuyer: User = {
-          id: 'user-buyer-1',
-          name: 'Ahmad Pratama',
-          email: 'buyer@digitalhub.id',
-          role: 'buyer',
-          avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
-          created_at: new Date().toISOString(),
-        };
-        // Auto set cookie for seamless out-of-the-box demo
-        await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: defaultBuyer.email, role: 'buyer', name: defaultBuyer.name }),
-        });
-        setUser(defaultBuyer);
-      }
-    } catch {
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { success } = useToast();
 
   useEffect(() => {
-    fetchCurrentUser();
+    // Langsung set default user, tanpa perlu proses login
+    const initUser = async () => {
+      try {
+        const res = await fetch('/api/auth/me');
+        const data = await res.json();
+        if (data.user) {
+          setUser(data.user);
+        } else {
+          // Auto-login sebagai buyer default
+          await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: DEFAULT_USER.email, role: 'buyer', name: DEFAULT_USER.name }),
+          });
+          setUser(DEFAULT_USER);
+        }
+      } catch {
+        setUser(DEFAULT_USER);
+      } finally {
+        setLoading(false);
+      }
+    };
+    initUser();
   }, []);
 
   const login = async (email: string, role?: UserRole, name?: string): Promise<boolean> => {
@@ -67,14 +67,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await res.json();
       if (data.user) {
         setUser(data.user);
-        success(`Selamat datang kembali, ${data.user.name}!`);
+        success(`Selamat datang, ${data.user.name}!`);
         return true;
-      } else {
-        error(data.error || 'Gagal login');
-        return false;
       }
+      return false;
     } catch {
-      error('Terjadi kesalahan jaringan');
       return false;
     }
   };
@@ -89,26 +86,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await res.json();
       if (data.user) {
         setUser(data.user);
-        success(`Pendaftaran berhasil! Halo, ${data.user.name}`);
+        success(`Berhasil terdaftar, halo ${data.user.name}!`);
         return true;
-      } else {
-        error(data.error || 'Pendaftaran gagal');
-        return false;
       }
+      return false;
     } catch {
-      error('Terjadi kesalahan jaringan');
       return false;
     }
   };
 
   const logout = async () => {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-      setUser(null);
-      success('Berhasil keluar');
-    } catch {
-      setUser(null);
-    }
+    // Reset ke user default, tidak benar-benar logout
+    setUser(DEFAULT_USER);
+    await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: DEFAULT_USER.email, role: 'buyer', name: DEFAULT_USER.name }),
+    });
   };
 
   const switchRole = async (newRole: UserRole) => {
@@ -125,7 +119,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         success(`Beralih ke mode ${newRole === 'seller' ? 'Penjual (Seller)' : 'Pembeli (Buyer)'}`);
       }
     } catch {
-      error('Gagal mengganti mode akun');
+      // ignore
     }
   };
 

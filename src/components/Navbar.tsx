@@ -3,33 +3,25 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { 
   Sparkles, 
   Search, 
   ShoppingBag, 
   Store, 
-  User as UserIcon, 
-  LogOut, 
   Menu, 
   X, 
-  ChevronDown, 
-  PlusCircle, 
   PackageCheck,
   LayoutDashboard,
-  ShieldCheck,
-  Layers
+  PlusCircle
 } from 'lucide-react';
 
 export default function Navbar() {
-  const { user, logout, switchRole, quickLoginAs } = useAuth();
   const { items } = useCart();
   const router = useRouter();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,48 +31,8 @@ export default function Navbar() {
     }
   };
 
-  const isSeller = user?.role === 'seller';
-
   return (
     <header className="sticky top-0 z-40 w-full bg-white/90 backdrop-blur-md border-b border-zinc-100 transition-all">
-      {/* Test-Drive Bar for reviewer convenience */}
-      <div className="bg-zinc-900 text-zinc-300 text-xs py-1.5 px-4">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span className="font-medium text-white">DigitalHub MVP Simulator</span>
-            <span className="hidden sm:inline text-zinc-400">| Status:</span>
-            <span className="text-emerald-400 font-medium">
-              {user ? `${user.name} (${user.role.toUpperCase()})` : 'Belum Login'}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <span className="text-zinc-400 hidden md:inline">Cepat Ganti Mode:</span>
-            <button
-              onClick={() => quickLoginAs('buyer')}
-              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
-                user?.role === 'buyer' 
-                  ? 'bg-emerald-500 text-white' 
-                  : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
-              }`}
-            >
-              Mode Pembeli (Buyer)
-            </button>
-            <button
-              onClick={() => quickLoginAs('seller')}
-              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
-                user?.role === 'seller' 
-                  ? 'bg-emerald-500 text-white' 
-                  : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
-              }`}
-            >
-              Mode Penjual (Seller)
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* Main Navbar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
         {/* Brand Logo */}
@@ -118,35 +70,21 @@ export default function Navbar() {
           <Link href="/products?category=all" className="hover:text-emerald-600 transition-colors">
             Kategori
           </Link>
-
-          {isSeller ? (
-            <>
-              <Link href="/seller" className="hover:text-emerald-600 transition-colors flex items-center gap-1.5 text-zinc-900 font-semibold">
-                <Store className="w-4 h-4 text-emerald-600" />
-                Seller Dashboard
-              </Link>
-              <Link href="/seller/products" className="hover:text-emerald-600 transition-colors">
-                Produk Saya
-              </Link>
-            </>
-          ) : (
-            <>
-              <Link href="/purchases" className="hover:text-emerald-600 transition-colors flex items-center gap-1.5">
-                <PackageCheck className="w-4 h-4 text-emerald-600" />
-                Akses Pembelian
-              </Link>
-              <button
-                onClick={() => switchRole('seller')}
-                className="text-emerald-600 hover:text-emerald-700 font-semibold flex items-center gap-1.5"
-              >
-                <Store className="w-4 h-4" />
-                Mulai Berjualan
-              </button>
-            </>
-          )}
+          <Link href="/purchases" className="hover:text-emerald-600 transition-colors flex items-center gap-1.5">
+            <PackageCheck className="w-4 h-4 text-emerald-600" />
+            Pembelian Saya
+          </Link>
+          <Link href="/seller" className="hover:text-emerald-600 transition-colors flex items-center gap-1.5 font-semibold text-emerald-700">
+            <Store className="w-4 h-4" />
+            Seller Studio
+          </Link>
+          <Link href="/dashboard" className="hover:text-emerald-600 transition-colors flex items-center gap-1.5">
+            <LayoutDashboard className="w-4 h-4" />
+            Dashboard
+          </Link>
         </nav>
 
-        {/* User & Actions */}
+        {/* Actions */}
         <div className="flex items-center gap-3">
           {/* Cart Icon */}
           <Link
@@ -162,112 +100,14 @@ export default function Navbar() {
             )}
           </Link>
 
-          {/* If Seller, quick Add Product CTA */}
-          {isSeller && (
-            <Link
-              href="/seller/products/new"
-              className="hidden sm:inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition-colors shadow-soft shadow-emerald-600/20"
-            >
-              <PlusCircle className="w-4 h-4" />
-              <span>Tambah Produk</span>
-            </Link>
-          )}
-
-          {/* User Menu / Auth Buttons */}
-          {user ? (
-            <div className="relative">
-              <button
-                onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                className="flex items-center gap-2 p-1.5 rounded-full hover:bg-zinc-100 transition-colors border border-zinc-200"
-              >
-                <img
-                  src={user.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user.name)}`}
-                  alt={user.name}
-                  className="w-7 h-7 rounded-full object-cover bg-zinc-200"
-                />
-                <span className="hidden md:inline text-xs font-semibold text-zinc-800 max-w-[120px] truncate">
-                  {user.name}
-                </span>
-                <ChevronDown className="w-3.5 h-3.5 text-zinc-500 mr-1" />
-              </button>
-
-              {userDropdownOpen && (
-                <div
-                  className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-zinc-100 py-2 z-50 animate-in fade-in zoom-in-95 duration-100"
-                  onClick={() => setUserDropdownOpen(false)}
-                >
-                  <div className="px-4 py-2 border-b border-zinc-100">
-                    <p className="text-xs font-semibold text-zinc-900 truncate">{user.name}</p>
-                    <p className="text-[11px] text-zinc-500 truncate">{user.email}</p>
-                    <span className="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800">
-                      {user.role}
-                    </span>
-                  </div>
-
-                  <div className="py-1 text-sm text-zinc-700">
-                    <Link
-                      href="/dashboard"
-                      className="flex items-center gap-2.5 px-4 py-2 hover:bg-zinc-50 transition-colors"
-                    >
-                      <LayoutDashboard className="w-4 h-4 text-zinc-500" />
-                      Dashboard Akun
-                    </Link>
-
-                    <Link
-                      href="/purchases"
-                      className="flex items-center gap-2.5 px-4 py-2 hover:bg-zinc-50 transition-colors"
-                    >
-                      <PackageCheck className="w-4 h-4 text-zinc-500" />
-                      Produk Dibeli (Downloads)
-                    </Link>
-
-                    {isSeller ? (
-                      <Link
-                        href="/seller"
-                        className="flex items-center gap-2.5 px-4 py-2 hover:bg-zinc-50 transition-colors font-medium text-emerald-700"
-                      >
-                        <Store className="w-4 h-4 text-emerald-600" />
-                        Seller Studio
-                      </Link>
-                    ) : (
-                      <button
-                        onClick={() => switchRole('seller')}
-                        className="w-full text-left flex items-center gap-2.5 px-4 py-2 hover:bg-zinc-50 transition-colors text-emerald-700 font-medium"
-                      >
-                        <Store className="w-4 h-4 text-emerald-600" />
-                        Aktifkan Mode Seller
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="border-t border-zinc-100 pt-1">
-                    <button
-                      onClick={() => logout()}
-                      className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      Keluar
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <Link
-                href="/auth/login"
-                className="text-xs sm:text-sm font-semibold text-zinc-700 hover:text-zinc-900 px-3 py-1.5 rounded-lg transition-colors"
-              >
-                Masuk
-              </Link>
-              <Link
-                href="/auth/register"
-                className="text-xs sm:text-sm font-semibold bg-zinc-900 hover:bg-zinc-800 text-white px-3.5 py-1.5 rounded-lg transition-colors"
-              >
-                Daftar
-              </Link>
-            </div>
-          )}
+          {/* Quick Add Product CTA */}
+          <Link
+            href="/seller/products/new"
+            className="hidden sm:inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition-colors shadow-soft shadow-emerald-600/20"
+          >
+            <PlusCircle className="w-4 h-4" />
+            <span>Jual Produk</span>
+          </Link>
 
           {/* Mobile hamburger */}
           <button
@@ -306,46 +146,31 @@ export default function Navbar() {
               onClick={() => setMobileMenuOpen(false)}
               className="px-3 py-2 rounded-lg hover:bg-zinc-100 flex items-center justify-between"
             >
-              <span>Akses Unduhan Saya</span>
+              <span>Pembelian Saya</span>
               <PackageCheck className="w-4 h-4 text-emerald-600" />
             </Link>
-
-            {isSeller ? (
-              <>
-                <Link
-                  href="/seller"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="px-3 py-2 rounded-lg bg-emerald-50 text-emerald-800 font-semibold flex items-center justify-between"
-                >
-                  <span>Seller Dashboard</span>
-                  <Store className="w-4 h-4" />
-                </Link>
-                <Link
-                  href="/seller/products/new"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="px-3 py-2 rounded-lg text-emerald-700 font-medium"
-                >
-                  + Tambah Produk Baru
-                </Link>
-              </>
-            ) : (
-              <button
-                onClick={() => {
-                  switchRole('seller');
-                  setMobileMenuOpen(false);
-                }}
-                className="text-left px-3 py-2 rounded-lg text-emerald-700 font-semibold"
-              >
-                Mulai Berjualan (Mode Seller)
-              </button>
-            )}
-
+            <Link
+              href="/seller"
+              onClick={() => setMobileMenuOpen(false)}
+              className="px-3 py-2 rounded-lg bg-emerald-50 text-emerald-800 font-semibold flex items-center justify-between"
+            >
+              <span>Seller Dashboard</span>
+              <Store className="w-4 h-4" />
+            </Link>
+            <Link
+              href="/seller/products/new"
+              onClick={() => setMobileMenuOpen(false)}
+              className="px-3 py-2 rounded-lg text-emerald-700 font-medium"
+            >
+              + Jual Produk Baru
+            </Link>
             <Link
               href="/dashboard"
               onClick={() => setMobileMenuOpen(false)}
-              className="px-3 py-2 rounded-lg hover:bg-zinc-100"
+              className="px-3 py-2 rounded-lg hover:bg-zinc-100 flex items-center justify-between"
             >
-              Dashboard Akun
+              <span>Dashboard Akun</span>
+              <LayoutDashboard className="w-4 h-4" />
             </Link>
           </div>
         </div>
