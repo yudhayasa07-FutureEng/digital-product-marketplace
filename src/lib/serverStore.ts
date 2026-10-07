@@ -12,57 +12,6 @@ export interface DatabaseSchema {
   reviews: Review[];
 }
 
-const DEFAULT_USERS: User[] = [
-  {
-    id: 'user-seller-1',
-    name: 'DevCraft Studio',
-    email: 'seller@digitalhub.id',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-    role: 'seller',
-    created_at: '2025-01-01T00:00:00Z',
-  },
-  {
-    id: 'user-buyer-1',
-    name: 'Ahmad Pratama',
-    email: 'buyer@digitalhub.id',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
-    role: 'buyer',
-    created_at: '2025-01-05T00:00:00Z',
-  },
-  {
-    id: 'user-admin-1',
-    name: 'Admin DigitalHub',
-    email: 'admin@digitalhub.id',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80',
-    role: 'admin',
-    created_at: '2025-01-01T00:00:00Z',
-  },
-];
-
-const DEFAULT_ORDERS: Order[] = [
-  {
-    id: 'ord-1001',
-    buyer_id: 'user-buyer-1',
-    buyer_name: 'Ahmad Pratama',
-    buyer_email: 'buyer@digitalhub.id',
-    total_amount: 149000,
-    status: 'completed',
-    payment_method: 'QRIS Sandbox',
-    items: [
-      {
-        id: 'item-1',
-        order_id: 'ord-1001',
-        product_id: 'prod-1',
-        product_name: 'The Modern Fullstack Next.js 14 Playbook',
-        product_thumbnail: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=800&q=80',
-        file_name: 'NextJS_Playbook_DevCraft_v2.pdf',
-        price: 149000,
-      },
-    ],
-    created_at: '2025-02-01T12:00:00Z',
-  },
-];
-
 const DB_DIR = path.join(process.cwd(), 'data');
 const DB_FILE = path.join(DB_DIR, 'db.json');
 const TMP_FILE = path.join(os.tmpdir(), 'digitalhub_db.json');
@@ -71,10 +20,10 @@ let memoryDb: DatabaseSchema | null = null;
 
 function getInitialDb(): DatabaseSchema {
   return {
-    users: DEFAULT_USERS,
+    users: [],
     categories: INITIAL_CATEGORIES,
     products: INITIAL_PRODUCTS,
-    orders: DEFAULT_ORDERS,
+    orders: [],
     reviews: INITIAL_REVIEWS,
   };
 }
