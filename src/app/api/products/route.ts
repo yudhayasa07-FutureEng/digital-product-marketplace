@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { serverDb } from '@/lib/serverStore';
-import { cookies } from 'next/headers';
+import { getAuthContext } from '@/lib/auth';
 import { slugify } from '@/lib/utils';
 
 export async function GET(request: Request) {
@@ -22,15 +22,17 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const cookieStore = cookies();
-    const userId = cookieStore.get('dh_user_id')?.value;
+    const { user, profile } = await getAuthContext();
 
-    let seller = userId ? serverDb.getUserById(userId) : null;
-    if (!seller) {
-      // Default fallback to seller demo user if testing
-      seller = serverDb.getUserById('user-seller-1');
+    if (!user || !profile) {
+      return NextResponse.json({ error: 'Silakan login dengan Google terlebih dahulu.' }, { status: 401 });
     }
 
+    if (profile.role !== 'admin' && (profile.seller_status !== 'approved' || profile.active_mode !== 'seller')) {
+      return NextResponse.json({ error: 'Akun kamu belum memiliki akses Seller.' }, { status: 403 });
+    }
+
+    const seller = profile;
     const body = await request.json();
     const { name, description, category, price, thumbnail_url, file_url, file_name, file_size, tags } = body;
 
@@ -51,8 +53,8 @@ export async function POST(request: Request) {
     const slug = slugify(name) + '-' + Date.now().toString().slice(-4);
 
     const newProduct = serverDb.createProduct({
-      seller_id: seller?.id || 'user-seller-1',
-      seller_name: seller?.name || 'Creator Store',
+      seller_id: seller.id,
+      seller_name: seller.name || user.email || 'Creator Store',
       name: name.trim(),
       slug,
       description: description.trim(),
