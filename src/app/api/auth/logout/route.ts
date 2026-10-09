@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+import { createClient } from '@/lib/supabase/server';
 
 export async function POST() {
-  const cookieStore = cookies();
-  cookieStore.delete('dh_user_id');
+  const supabase = createClient();
+  const { error } = await supabase.auth.signOut();
+  if (error) return NextResponse.json({ error: 'Gagal mengakhiri sesi.' }, { status: 500 });
   return NextResponse.json({ success: true });
 }
