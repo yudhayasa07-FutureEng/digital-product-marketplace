@@ -8,12 +8,18 @@ import { createClient } from '@/lib/supabase/client';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  loginWithGoogle: () => Promise<boolean>;
+  loginWithGoogle: (nextPath?: string) => Promise<boolean>;
   logout: () => Promise<void>;
   switchRole: (role: 'buyer' | 'seller') => Promise<void>;
   refreshUser: () => Promise<void>;
 }
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+function safeNextPath(path?: string) {
+  return path && path.startsWith('/') && !path.startsWith('//') && !path.includes('\\\\')
+    ? path
+    : '/dashboard';
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -32,14 +38,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => { refreshUser(); }, []);
 
-  const loginWithGoogle = async () => {
+  const loginWithGoogle = async (nextPath?: string) => {
     setLoading(true);
+    const next = safeNextPath(nextPath);
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin + '/auth/callback?next=/dashboard' },
+      options: { redirectTo: window.location.origin + '/auth/callback?next=' + encodeURIComponent(next) },
     });
     if (oauthError) {
-      error(oauthError.message);
+      error('Login Google gagal. Periksa konfigurasi OAuth lalu coba lagi.');
       setLoading(false);
       return false;
     }
