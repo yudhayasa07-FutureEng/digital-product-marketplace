@@ -15,27 +15,41 @@ function safeNextPath(path: string) {
     : '/dashboard';
 }
 
+function isVerifiedGoogleUser(user: {
+  app_metadata?: Record<string, unknown>;
+  identities?: Array<{ provider?: string }> | null;
+  email?: string;
+  email_confirmed_at?: string | null;
+  confirmed_at?: string | null;
+}) {
+  const provider = user.app_metadata?.provider;
+  const hasGoogleIdentity = user.identities?.some((identity) => identity.provider === 'google') ?? false;
+  const emailIsVerified = Boolean(user.email && (user.email_confirmed_at || user.confirmed_at));
+  return provider === 'google' && hasGoogleIdentity && emailIsVerified;
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
-  // Login and OAuth callback must remain reachable without a session.
+  // Only the login screen, OAuth callback and framework assets are public.
   if (
     pathname === '/auth/login' ||
     pathname === '/auth/callback' ||
     pathname.startsWith('/_next/') ||
     pathname === '/favicon.ico' ||
-    /\.(?:png|jpg|jpeg|gif|svg|webp|ico|css|js|woff2?)$/i.test(pathname)
+    pathname === '/robots.txt' ||
+    pathname === '/sitemap.xml' ||
+    /\\.(?:png|jpg|jpeg|gif|svg|webp|ico|css|js|woff2?)$/i.test(pathname)
   ) {
     return NextResponse.next();
   }
 
-  // Fail closed: without the public Supabase configuration, do not expose app pages.
+  // Fail closed if Supabase public client configuration is missing.
   if (!supabaseUrl || !supabaseAnonKey || !authCookieName) {
     if (pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'Authentication is not configured' }, { status: 503 });
     }
-    const loginUrl = new URL('/auth/login?error=config', request.url);
-    return NextResponse.redirect(loginUrl);
+    return NextResponse.redirect(new URL('/auth/login?error=config', request.url));
   }
 
   let response = NextResponse.next({ request });
@@ -84,9 +98,18 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
+  // Reject sessions authenticated through another provider or without a verified email.
+  if (!isVerifiedGoogleUser(data.user)) {
+    await supabase.auth.signOut();
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json({ error: 'Akses ditolak. Gunakan akun Google dengan email terverifikasi.' }, { status: 403 });
+    }
+    return NextResponse.redirect(new URL('/auth/login?error=google_verification', request.url));
+  }
+
   return response;
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|robots.txt|sitemap.xml).*)'],
+  matcher: ['/((?!_next/static|_next/image).*)'],
 };
