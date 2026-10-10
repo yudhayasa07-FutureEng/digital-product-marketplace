@@ -11,8 +11,14 @@ export default function LoginPage() {
   const { user, loading, loginWithGoogle } = useAuth();
 
   useEffect(() => {
-    if (!loading && user) router.replace('/dashboard');
-  }, [loading, user, router]);
+    if (!loading && user) {
+      const next = params.get('next');
+      const safeNext = next && next.startsWith('/') && !next.startsWith('//') && !next.includes('\\\\')
+        ? next
+        : '/dashboard';
+      router.replace(safeNext);
+    }
+  }, [loading, user, router, params]);
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
@@ -22,11 +28,11 @@ export default function LoginPage() {
             <Sparkles className="w-6 h-6" />
           </div>
           <h1 className="text-2xl font-extrabold text-zinc-900">Masuk ke DigitalHub</h1>
-          <p className="text-xs text-zinc-500">Login aman menggunakan akun Google.</p>
+          <p className="text-xs text-zinc-500">Untuk melanjutkan, login wajib menggunakan akun Google.</p>
         </div>
         {params.get('error') && <p className="text-xs text-red-600 bg-red-50 rounded-xl p-3">Login Google gagal. Silakan coba lagi.</p>}
         <button
-          onClick={loginWithGoogle}
+          onClick={() => loginWithGoogle(params.get('next') || '/dashboard')}
           disabled={loading}
           className="w-full flex items-center justify-center gap-3 bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-sm py-3 px-4 rounded-xl disabled:opacity-50"
         >
