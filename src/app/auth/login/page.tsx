@@ -13,7 +13,8 @@ export default function LoginPage() {
   useEffect(() => {
     if (!loading && user) {
       const next = params.get('next');
-      const safeNext = next && next.startsWith('/') && !next.startsWith('//') && !next.includes('\\\\')
+      const safeNext = next && next.startsWith('/') && !next.startsWith('//') &&
+        !next.includes(String.fromCharCode(92))
         ? next
         : '/dashboard';
       router.replace(safeNext);
