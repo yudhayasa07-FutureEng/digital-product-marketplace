@@ -8,7 +8,9 @@ const authCookieName = supabaseUrl
   : '';
 
 function safeNextPath(path: string) {
-  return path.startsWith('/') && !path.startsWith('//') && !path.includes('\\\\')
+  return path.startsWith('/') &&
+    !path.startsWith('//') &&
+    !path.includes(String.fromCharCode(92))
     ? path
     : '/dashboard';
 }
@@ -22,7 +24,7 @@ export async function middleware(request: NextRequest) {
     pathname === '/auth/callback' ||
     pathname.startsWith('/_next/') ||
     pathname === '/favicon.ico' ||
-    /\\.(?:png|jpg|jpeg|gif|svg|webp|ico|css|js|woff2?)$/i.test(pathname)
+    /\.(?:png|jpg|jpeg|gif|svg|webp|ico|css|js|woff2?)$/i.test(pathname)
   ) {
     return NextResponse.next();
   }
