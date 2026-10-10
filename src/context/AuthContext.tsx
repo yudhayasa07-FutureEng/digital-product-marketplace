@@ -16,7 +16,8 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 function safeNextPath(path?: string) {
-  return path && path.startsWith('/') && !path.startsWith('//') && !path.includes('\\\\')
+  return path && path.startsWith('/') && !path.startsWith('//') &&
+    !path.includes(String.fromCharCode(92))
     ? path
     : '/dashboard';
 }
